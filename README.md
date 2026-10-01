@@ -1,80 +1,276 @@
 # cedar-render-sdk
 
-预编译的 Cedar Render SDK 发布仓库。
+Cedar Render 的预编译 SDK / runtime 发布仓库。
 
-本仓库**不存放实现源码**，只用于发布可直接集成和运行的构建产物，例如：
+本仓库**不存放 Chromium / CEF 实现源码**，只发布已经编译好的包，供 `cedar-c2v-cpp` 等上层项目直接使用。
+
+当前 Linux x64 的发布格式保持 CEF 标准 `minimal` distribution 结构，不再额外重新打包。这样现有 `cedar-c2v-cpp` 可以直接消费，无需修改它的 CMake/CEF 集成方式。
+
+## 当前包
+
+当前目标版本：
+
+```
+cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2
+```
+
+对应：
+
+- CEF: `152.0.6+g708dc14`
+- CEF commit: `708dc140cbc3286826a8abef89dc23a44ff9ea72`
+- Chromium: `152.0.7977.83`
+- Platform: Linux x64
+- Distribution: `minimal`
+
+这不是官方原版 CEF binary。
+
+其中的 `libcef.so` 带有 Cedar 使用的定制能力：
+
+```
+cef_request_raw_snapshot
+```
+
+`cedar-c2v-cpp` 会在 build 和 runtime 两个阶段检查/使用这个能力。
+
+## 包里面有什么
+
+这是完整的 CEF minimal binary distribution，解压后顶层类似：
+
+```
+cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal/
+├── CMakeLists.txt
+├── include/
+├── cmake/
+├── libcef_dll/
+├── Release/
+│   └── libcef.so
+└── Resources/
+```
+
+因此它同时包含：
 
 - C/C++ headers
-- static libraries
-- shared libraries（`.so`）
-- runtime files / resources
-- 版本与构建信息
+- `libcef.so`
+- `libcef_dll_wrapper` 的构建源码/配置
+- CEF CMake 配置
+- Chromium runtime resources
 
-## 和其它 Cedar 仓库的关系
+这里的“SDK”指**可供 C/C++ 项目集成的预编译 CEF distribution**，不是 cedar-render-shell 的源代码仓库。
+
+## cedar-c2v-cpp 如何使用
+
+`cedar-c2v-cpp` 已经支持直接使用这个 tarball。
+
+### 1. 下载 release package
+
+从本仓库的 GitHub Releases 下载：
+
+```
+cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2
+```
+
+不需要手工解压。
+
+### 2. Stage 到 cedar-c2v-cpp
+
+在 `cedar-c2v-cpp` 根目录执行：
+
+```bash
+export CEF_ARTIFACT="/absolute/path/to/cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2"
+
+bash cef-custom-build/scripts/stage-cef-artifact.sh
+```
+
+这个脚本不是简单的 `tar -x`。
+
+它会先检查：
+
+- 文件名是否和 `cef-custom-build/CEF_VERSION.lock` 一致；
+- archive 是否只有正确的顶层目录；
+- 是否包含 `Release/`、`Resources/`、`include/`、`cmake/`、`libcef_dll/`；
+- 是否存在 `Release/libcef.so`；
+- `libcef.so` 是否真的导出 `cef_request_raw_snapshot`。
+
+验证通过后，包会被放到：
+
+```
+cedar-c2v-cpp/
+└── cef/
+    └── third_party/
+        └── cef/
+            └── cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal/
+```
+
+### 3. 正常构建 cedar-c2v-cpp
+
+然后直接：
+
+```bash
+docker build --shm-size=1g \
+  -t videoengine \
+  -f docker/Dockerfile.service .
+```
+
+不需要重新编译 Chromium / CEF。
+
+## 内部是怎么接上的
+
+调用链如下：
+
+```
+cedar-render-sdk release
+        │
+        │ download tar.bz2
+        ▼
+stage-cef-artifact.sh
+        │
+        ▼
+cef/third_party/cef/
+cef_binary_<version>_linux64_minimal/
+        │
+        │ Docker COPY
+        ▼
+/app/cef/third_party/cef/
+        │
+        ▼
+cef/cmake/DownloadCEF.cmake
+        │
+        │ directory already exists
+        │ → skip official CEF download
+        ▼
+CEF_ROOT
+        │
+        ├── include headers
+        ├── build libcef_dll_wrapper
+        ├── link Release/libcef.so
+        └── copy CEF runtime/resources
+        ▼
+cefservice
+```
+
+关键点是：
+
+> `DownloadCEF.cmake` 本来就先检查目标 CEF directory 是否已经存在。
+
+如果 staged package 已经存在，它不会访问 `cef-builds.spotifycdn.com` 下载官方 CEF，而是直接把这个目录设为 `CEF_ROOT`。
+
+所以这个 SDK package 可以在**不修改 cedar-c2v-cpp 原有 CEF CMake 集成逻辑**的情况下替换官方 CEF。
+
+## Build 时的保护
+
+`docker/Dockerfile.service` 默认是 fail-closed。
+
+CMake configure 之前，`check-staged-cef.sh` 会确认对应版本已经 staged。
+
+CMake configure 之后还会再次检查：
+
+```bash
+nm -D --defined-only Release/libcef.so
+```
+
+必须能找到：
+
+```
+cef_request_raw_snapshot
+```
+
+否则默认 production build 直接失败，避免不小心退回官方 CEF 的 CDP-only 路径。
+
+只有显式使用：
+
+```bash
+--build-arg ALLOW_OFFICIAL_CEF=1
+```
+
+才允许使用官方 CEF 作为 CDP control build。
+
+## Runtime 选择
+
+`cedar-c2v-cpp` 运行时通过 `dlsym` 检测当前加载的 `libcef.so` 是否提供：
+
+```
+cef_request_raw_snapshot
+```
+
+`VG_RAW_SNAPSHOT` 的行为：
+
+| 设置 | 行为 |
+| --- | --- |
+| 未设置 | libcef 支持 raw → raw；不支持 → CDP |
+| `VG_RAW_SNAPSHOT=0` | 强制 CDP |
+| `VG_RAW_SNAPSHOT=1` | 强制要求 raw；libcef 不支持则失败 |
+
+正常 production build 不需要设置它；定制 `libcef.so` 被正确加载后会自动走 raw path。
+
+## 已验证 artifact identity
+
+当前在 `cedar-c2v-cpp` 中记录并完成 end-to-end 验证的 patched artifact：
+
+| 项目 | 值 |
+| --- | --- |
+| filename | `cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2` |
+| size | `321,478,158` bytes |
+| tarball SHA-256 | `7eda840f893f72764a1a14b0ad491c8d25d91507ff59c454c87ace1de9c5f2f1` |
+| `libcef.so` SHA-256 | `d8bb85ad84bf5eaee62b961f6d255aaf20a7db5db8ca02a14ca684c4df4aad53` |
+| custom export | `cef_request_raw_snapshot` |
+
+注意：CEF / Chromium source build 不保证不同机器之间 bit-for-bit reproducible。SHA-256 用于识别这个已经验证过的具体 artifact，不代表所有从相同源码重新编译的文件都必须得到相同 hash。
+
+## 三个仓库的职责
 
 ### cedar-render-shell
 
-Cedar Render 的实现与研发仓库。
-
-它负责 Chromium / CEF 相关的渲染实现、实验、构建和测试。
+研究和实现 Cedar 自己的 Chromium / CEF renderer 路线，包括 frame identity、compositor output 和更直接的 pixel delivery。
 
 ### cedar-render-sdk
 
 **本仓库。**
 
-它只保存 `cedar-render-shell` 产生的预编译 SDK / release package，供其它项目直接使用，不需要重新编译 Chromium。
+只保存可以交付给上层项目使用的预编译 renderer/CEF SDK package。
 
 ### cedar-c2v-cpp
 
-上层视频生成项目。
+最终的视频生成项目。
 
-`cedar-c2v-cpp` 可以使用这里发布的 SDK 获得 HTML/CSS/JavaScript 渲染能力，再完成后续的视频编码和输出。
+它负责：
+
+- 调用 renderer；
+- worker / concurrency；
+- frame processing；
+- AV1 / WebM 等视频编码与输出；
+- 产品级 end-to-end 流程。
 
 简单理解：
 
 ```
-cedar-render-shell
-    │
-    │ build
-    ▼
+renderer / CEF implementation
+        │
+        │ build
+        ▼
 cedar-render-sdk
-    │
-    │ integrate
-    ▼
+        │
+        │ prebuilt package
+        ▼
 cedar-c2v-cpp
+        │
+        ▼
+video
 ```
 
-## Release package
+## 发布约定
 
-典型的发布包会包含：
+每个 Release 至少记录：
 
-```
-include/
-lib/
-runtime/
-resources/
-VERSION
-```
-
-实际目录结构以对应 Release 为准。
-
-## 版本
-
-SDK 版本通过 GitHub Releases 发布。
-
-每个 Release 应尽量记录：
-
-- SDK version
-- 对应的 `cedar-render-shell` commit / tag
-- Chromium / CEF version
+- package filename
+- Cedar SDK version
+- CEF version / commit
+- Chromium version
 - target platform / architecture
-- build configuration
-- checksum
+- 对应实现/patch 的来源 commit
+- tarball SHA-256
+- `libcef.so` SHA-256
+- custom exports / capabilities
 
-这样可以确保上层项目能够准确复现所使用的渲染环境。
+目标是让 `cedar-c2v-cpp` 只需要：
 
-## 使用方式
-
-从 GitHub Releases 下载需要的版本，解压后将 headers、libraries 和 runtime files 集成到目标项目中。
-
-本仓库不接受与渲染实现相关的源码修改；相关开发工作应在 `cedar-render-shell` 中进行。
+> 下载一个经过验证的 package，而不需要重新编译 Chromium。
