@@ -16,14 +16,13 @@ The build procedure comes from `cedar-c2v-cpp`:
 - `cef-custom-build/scripts/build-cef-from-source.sh`
 - `cef-custom-build/patches/0001-b1-native-raw-snapshot.patch`
 
-For v0.01, the relevant build/provenance state is represented by:
+For v0.01, use the stable `cedar-c2v-cpp` tag:
 
 ```
-cedar-c2v-cpp commit:
-d563d13a035e456edfdf67dc086458c6d0d2804d
+v2.0.0
 ```
 
-That commit already records the verified patched CEF artifact identity used by this release. Later consumer-side changes in `cedar-c2v-cpp` do not change how this v0.01 binary was built.
+That tag contains the custom CEF source-build flow, raw-snapshot patch, version lock, and build documentation used as the reproducible reference for this release.
 
 ## Pinned inputs
 
@@ -31,10 +30,10 @@ That commit already records the verified patched CEF artifact identity used by t
 | --- | --- |
 | CEF version | `152.0.6+g708dc14+chromium-152.0.7977.83` |
 | CEF branch | `7977` |
-| CEF commit | `708dc140cbc3286826a8abef89dc23a44ff9ea72` |
 | Chromium | `152.0.7977.83` |
 | Chromium checkout | `refs/tags/152.0.7977.83` |
-| depot_tools commit | `46afe8bfbb57583700c01d1584e7a49638d586ed` |
+| cedar-c2v-cpp reference tag | `v2.0.0` |
+| Exact source/tool revisions | see `cef-custom-build/CEF_VERSION.lock` in that tag |
 | Distribution | Linux x64, Release, CEF `minimal` |
 | Archive format | `tar.bz2` |
 
@@ -145,24 +144,9 @@ The script performs four important build phases:
 3. Install the Chromium build dependencies from the checked-out source tree.
 4. Build `libcef` and create the CEF `minimal` distribution.
 
-Internally the final build/package phase is equivalent to using the pinned CEF driver with:
+The exact checkout and tool revisions are intentionally not duplicated here. They are read from `cef-custom-build/CEF_VERSION.lock` in the `cedar-c2v-cpp` `v2.0.0` tag.
 
-```
---branch=7977
---checkout=708dc140cbc3286826a8abef89dc23a44ff9ea72
---x64-build
---with-pgo-profiles
---minimal-distrib-only
---no-debug-build
---no-chromium-history
---no-depot-tools-update
---no-update
---build-target=libcef
---force-build
---force-distrib
-```
-
-`--no-update` is important because the Cedar patch is applied after source sync; another update at that point could discard the local patch.
+The final build/package phase uses the pinned CEF driver to build `libcef`, preserve the already-applied Cedar patch, and generate the Linux x64 Release `minimal` distribution.
 
 ### 3. Produced CEF archive
 
@@ -225,7 +209,7 @@ Therefore the published asset keeps the same SHA-256:
 
 For the closest reproduction of this release:
 
-1. Check out `cedar-c2v-cpp` at `d563d13a035e456edfdf67dc086458c6d0d2804d`.
+1. Check out the `cedar-c2v-cpp` tag `v2.0.0`.
 2. Use the pinned values in `cef-custom-build/CEF_VERSION.lock`.
 3. Run `cef-custom-build/scripts/build-cef-from-source.sh`.
 4. Verify `cef_request_raw_snapshot` exists.
