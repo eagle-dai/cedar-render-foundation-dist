@@ -100,7 +100,8 @@ package CEF minimal distribution
 verify cef_request_raw_snapshot
         │
         ▼
-verify artifact SHA-256
+record / verify artifact identity
+(size + SHA-256)
         │
         ▼
 rename archive for Cedar release
@@ -172,7 +173,9 @@ The packaged copy must also contain the same export in:
 Release/libcef.so
 ```
 
-### 5. Verify artifact identity
+### 5. Record and verify artifact identity
+
+After the build, record the produced artifact identity and compare it with the known v0.01 release artifact when validating an existing saved copy.
 
 The artifact used for v0.01 was verified as:
 
