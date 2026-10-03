@@ -105,16 +105,19 @@ Normal production use does not require setting `VG_RAW_SNAPSHOT`.
 
 ## Using it in cedar-c2v-cpp
 
+For `cedar-c2v-cpp v2.1.2`, normal builds consume this release automatically.
+
 Overall flow:
 
 ```
-Cedar distribution tarball
+cedar-render-foundation-dist v0.01
         │
-        │ stage
+        │ DownloadCEF.cmake
+        │ + SHA-256 verification
         ▼
-cedar-c2v-cpp/cef/third_party/cef/
+cef/third_party/cef/
+└── cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal/
         │
-        │ Docker COPY
         ▼
 CEF_ROOT
         │
@@ -125,66 +128,9 @@ build cefservice / framemerger
 runtime uses Cedar libcef.so
 ```
 
-### 1. Download the package
+### Normal build
 
-Download:
-
-```
-cedar-render-foundation-v0.01-chromium-152.0.7977.83-linux-x64.tar.bz2
-```
-
-No manual extraction is required.
-
-### 2. Stage it into cedar-c2v-cpp
-
-`cedar-c2v-cpp` already provides:
-
-```
-cef-custom-build/scripts/stage-cef-artifact.sh
-```
-
-The script:
-
-1. checks that the archive is safe;
-2. checks that the archive has the expected top-level directory;
-3. verifies `Release/`, `Resources/`, `include/`, `cmake/`, and `libcef_dll/`;
-4. verifies `Release/libcef.so`;
-5. uses `nm` to confirm that `cef_request_raw_snapshot` is exported;
-6. calculates SHA-256 for both the tarball and `libcef.so`;
-7. stages the validated distribution under:
-
-```
-cef/third_party/cef/
-└── cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal/
-```
-
-### 3. Current v0.01 filename compatibility
-
-The current `cedar-c2v-cpp` `stage-cef-artifact.sh` still validates the archive basename and expects the original CEF filename:
-
-```
-cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2
-```
-
-Until the consumer is updated to accept the Cedar package name directly, create a symlink instead of copying the roughly 321 MB file:
-
-```bash
-ln -s \
-  /absolute/path/to/cedar-render-foundation-v0.01-chromium-152.0.7977.83-linux-x64.tar.bz2 \
-  /tmp/cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2
-
-export CEF_ARTIFACT="/tmp/cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2"
-
-bash cef-custom-build/scripts/stage-cef-artifact.sh
-```
-
-Only the external filename changes. The directory inside the tarball still follows the standard CEF distribution layout, so the CMake integration does not need to change.
-
-Once `cedar-c2v-cpp` accepts Cedar package names directly, this compatibility step can be removed.
-
-### 4. Build cedar-c2v-cpp
-
-After staging:
+From `cedar-c2v-cpp`:
 
 ```bash
 docker build --shm-size=1g \
@@ -192,27 +138,47 @@ docker build --shm-size=1g \
   -f docker/Dockerfile.service .
 ```
 
-The Docker build copies:
+No manual download, rename, symlink, or staging command is required.
+
+`cef/cmake/DownloadCEF.cmake` points to this v0.01 release asset and pins its SHA-256.
+
+If the matching extracted CEF distribution already exists under:
 
 ```
 cef/third_party/cef/
 ```
 
-into the build image.
+it is reused and no download occurs.
 
-When the CEF CMake logic sees that the required distribution is already present, it uses it as `CEF_ROOT` instead of downloading the official CEF package.
+Otherwise CMake downloads the published v0.01 package, verifies its SHA-256, and extracts the standard CEF `minimal` distribution.
 
-The default production build is fail-closed:
+### Raw-capability gate
 
-> If the staged Cedar CEF distribution is missing, or if `libcef.so` does not export `cef_request_raw_snapshot`, the build fails instead of silently falling back to official CEF.
+The Docker build checks that:
 
-Only an explicit:
-
-```bash
---build-arg ALLOW_OFFICIAL_CEF=1
+```
+Release/libcef.so
 ```
 
-allows an official CEF / CDP control build.
+exports:
+
+```
+cef_request_raw_snapshot
+```
+
+If the symbol is missing, the production build fails instead of silently using a non-raw CEF distribution.
+
+### When the source build is needed
+
+The slow Chromium / CEF source build is not part of a normal `cedar-c2v-cpp` build.
+
+Run it only when producing a new foundation binary, for example when:
+
+- upgrading CEF / Chromium;
+- changing the Cedar raw-snapshot patch;
+- changing the CEF build arguments.
+
+See `BUILD.md` and the `cedar-c2v-cpp v2.1.2` files under `cef-custom-build/` for that process.
 
 ## Why a full distribution is published
 
