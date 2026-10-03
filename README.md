@@ -6,11 +6,11 @@ Cedar Render 基础渲染层的预编译发行仓库。
 
 ## Releases
 
-| Version | Package | Platform | Details |
-| --- | --- | --- | --- |
-| v0.01 | `cedar-render-foundation-v0.01-linux-x64.tar.bz2` | Linux x64 | [release notes](releases/v0.01/README.md) |
+| Version | Chromium | Package | Platform | Details |
+| --- | --- | --- | --- | --- |
+| v0.01 | `152.0.7977.83` | `cedar-render-foundation-v0.01-chromium-152.0.7977.83-linux-x64.tar.bz2` | Linux x64 | [release notes](releases/v0.01/README.md) |
 
-版本相关的 Chromium / CEF 信息、SHA-256、custom capabilities 等细节统一放在 `releases/` 下，不放在首页 README。
+CEF 版本、SHA-256、custom capabilities 等更具体的信息统一放在 `releases/` 下。
 
 ## Repository role
 
@@ -32,16 +32,16 @@ cedar-c2v-cpp
 
 ## Package naming
 
-发行包使用 Cedar 自己的版本号命名：
+发行包同时包含 Cedar release version 和 Chromium version：
 
 ```
-cedar-render-foundation-v<version>-<platform>-<arch>.tar.bz2
+cedar-render-foundation-v<version>-chromium-<chromium-version>-<platform>-<arch>.tar.bz2
 ```
 
 例如：
 
 ```
-cedar-render-foundation-v0.01-linux-x64.tar.bz2
+cedar-render-foundation-v0.01-chromium-152.0.7977.83-linux-x64.tar.bz2
 ```
 
-底层 CEF / Chromium 的具体版本属于 release implementation detail，记录在对应版本目录中。
+这样可以同时看出 Cedar 发行版本和底层 Chromium 基线；CEF 的具体版本记录在对应 release notes 中。
