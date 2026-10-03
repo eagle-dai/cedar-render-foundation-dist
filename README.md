@@ -1,8 +1,8 @@
 # cedar-render-foundation-dist
 
-Cedar Render 基础渲染层的预编译发行仓库。
+Prebuilt distribution repository for the Cedar Render foundation layer.
 
-本仓库不保存 Chromium / CEF 实现源码，只保存和发布已经编译、验证过的 distribution，供 `cedar-c2v-cpp` 等上层项目直接使用。
+This repository does not contain Chromium / CEF implementation source code. It stores and publishes compiled and verified distributions for upper-layer projects such as `cedar-c2v-cpp`.
 
 ## Releases
 
@@ -10,7 +10,7 @@ Cedar Render 基础渲染层的预编译发行仓库。
 | --- | --- | --- | --- | --- |
 | v0.01 | `152.0.7977.83` | `cedar-render-foundation-v0.01-chromium-152.0.7977.83-linux-x64.tar.bz2` | Linux x64 | [release notes](releases/v0.01/README.md) |
 
-CEF 版本、SHA-256、custom capabilities 等更具体的信息统一放在 `releases/` 下。
+More detailed information such as the CEF version, SHA-256 values, and custom capabilities is kept under `releases/`.
 
 ## Repository role
 
@@ -26,22 +26,22 @@ cedar-render-foundation-dist
 cedar-c2v-cpp
 ```
 
-- renderer / Chromium / CEF 的实现与研究：上游 foundation 实现仓库
-- 本仓库：发布经过验证的预编译 distribution
-- `cedar-c2v-cpp`：消费 distribution 并完成视频生成
+- Renderer / Chromium / CEF implementation and research: upstream foundation implementation repository
+- This repository: publishes verified prebuilt distributions
+- `cedar-c2v-cpp`: consumes the distribution and performs video generation
 
 ## Package naming
 
-发行包同时包含 Cedar release version 和 Chromium version：
+Release packages include both the Cedar release version and the Chromium version:
 
 ```
 cedar-render-foundation-v<version>-chromium-<chromium-version>-<platform>-<arch>.tar.bz2
 ```
 
-例如：
+Example:
 
 ```
 cedar-render-foundation-v0.01-chromium-152.0.7977.83-linux-x64.tar.bz2
 ```
 
-这样可以同时看出 Cedar 发行版本和底层 Chromium 基线；CEF 的具体版本记录在对应 release notes 中。
+This makes both the Cedar release and the Chromium baseline visible from the filename. The exact CEF version is recorded in the corresponding release notes.
