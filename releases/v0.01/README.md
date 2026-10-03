@@ -1,10 +1,10 @@
 # Cedar Render Foundation v0.01
 
-第一版 Cedar Render Foundation distribution。
+The first Cedar Render Foundation distribution.
 
-它的目标很简单：
+Its purpose is simple:
 
-> 给 `cedar-c2v-cpp` 提供一个已经编译、验证过的 Cedar 定制 Chromium / CEF 基础运行包，避免每次都重新编译 Chromium / CEF。
+> Provide `cedar-c2v-cpp` with a compiled and verified Cedar-customized Chromium / CEF foundation package, so Chromium / CEF does not need to be rebuilt for every normal build.
 
 ## Package
 
@@ -14,7 +14,7 @@ cedar-render-foundation-v0.01-chromium-152.0.7977.83-linux-x64.tar.bz2
 
 ## Base
 
-该版本基于：
+This release is based on:
 
 ```
 cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2
@@ -29,17 +29,17 @@ cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2
 | Platform | Linux x64 |
 | Distribution | CEF `minimal` |
 
-## 包里有什么
+## What's included
 
-v0.01 保持 CEF 标准 `minimal` distribution 结构。
+v0.01 keeps the standard CEF `minimal` distribution layout.
 
-tarball 内部的顶层目录仍然是：
+The top-level directory inside the tarball remains:
 
 ```
 cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal/
 ```
 
-主要内容：
+Main contents:
 
 ```
 cef_binary_..._linux64_minimal/
@@ -52,55 +52,55 @@ cef_binary_..._linux64_minimal/
 └── Resources/
 ```
 
-其中：
+Key parts:
 
-- `Release/libcef.so`：Chromium / CEF 的主要运行库，也是 Cedar 定制能力所在。
-- `Resources/`：Chromium / CEF 运行时需要的资源文件。
-- `include/`：CEF C/C++ headers。
-- `libcef_dll/`：`libcef_dll_wrapper` 的源码。
-- `cmake/`、`CMakeLists.txt`：供 CMake 项目直接集成 CEF。
+- `Release/libcef.so`: the main Chromium / CEF runtime library and the location of the Cedar-specific capability.
+- `Resources/`: Chromium / CEF runtime resources.
+- `include/`: CEF C/C++ headers.
+- `libcef_dll/`: source for `libcef_dll_wrapper`.
+- `cmake/` and `CMakeLists.txt`: CMake integration files for consuming the CEF distribution.
 
-因此这个包不仅是一个 `libcef.so`，而是一个可以直接被现有 CEF CMake 工程消费的完整 minimal distribution。
+This package is therefore more than a single `libcef.so`. It is a complete CEF minimal distribution that can be consumed directly by an existing CEF CMake project.
 
-### 不包含什么
+### What's not included
 
-这个包不包含：
+This package does not include:
 
-- `cedar-c2v-cpp` 的业务代码；
-- HTML → video 的 Node.js 服务；
-- framemerger；
-- AV1 / WebM encoder；
-- Cedar 的上层 worker / scheduling 逻辑。
+- `cedar-c2v-cpp` application code
+- the Node.js HTML-to-video service
+- framemerger
+- AV1 / WebM encoder code
+- Cedar upper-layer worker / scheduling logic
 
-这些仍然属于 `cedar-c2v-cpp`。
+Those remain part of `cedar-c2v-cpp`.
 
-## 和官方 CEF 的区别
+## Difference from official CEF
 
-v0.01 不是官方原版 CEF binary。
+v0.01 is not an unmodified official CEF binary.
 
-Cedar 在 `libcef.so` 中增加了：
+Cedar adds the following export to `libcef.so`:
 
 ```
 cef_request_raw_snapshot
 ```
 
-这个 native C export 让 `cedar-c2v-cpp` 可以直接请求 raw pixel snapshot，而不必只依赖 Chrome DevTools Protocol（CDP）截图路径。
+This native C export allows `cedar-c2v-cpp` to request a raw pixel snapshot directly instead of relying only on the Chrome DevTools Protocol (CDP) screenshot path.
 
-`cedar-c2v-cpp` 在运行时通过 `dlsym` 检查这个 symbol 是否存在，因此不需要在链接阶段硬依赖 Cedar 私有 API。
+At runtime, `cedar-c2v-cpp` uses `dlsym` to detect whether this symbol is available, so it does not need a hard link-time dependency on the Cedar-private API.
 
-运行时选择规则：
+Runtime selection rules:
 
-| `VG_RAW_SNAPSHOT` | 行为 |
+| `VG_RAW_SNAPSHOT` | Behavior |
 | --- | --- |
-| 未设置 | 有 Cedar raw capability → raw；否则 → CDP |
-| `0` | 强制使用 CDP |
-| `1` | 强制要求 raw；没有该 capability 则失败 |
+| unset | use raw if the Cedar capability is available; otherwise use CDP |
+| `0` | force CDP |
+| `1` | require raw; fail if the capability is unavailable |
 
-正常 production 使用不需要设置 `VG_RAW_SNAPSHOT`。
+Normal production use does not require setting `VG_RAW_SNAPSHOT`.
 
-## 在 cedar-c2v-cpp 中如何使用
+## Using it in cedar-c2v-cpp
 
-整体流程：
+Overall flow:
 
 ```
 Cedar distribution tarball
@@ -120,48 +120,48 @@ build cefservice / framemerger
 runtime uses Cedar libcef.so
 ```
 
-### 1. 下载 package
+### 1. Download the package
 
-下载：
+Download:
 
 ```
 cedar-render-foundation-v0.01-chromium-152.0.7977.83-linux-x64.tar.bz2
 ```
 
-不需要手工解压。
+No manual extraction is required.
 
-### 2. Stage 到 cedar-c2v-cpp
+### 2. Stage it into cedar-c2v-cpp
 
-`cedar-c2v-cpp` 已有：
+`cedar-c2v-cpp` already provides:
 
 ```
 cef-custom-build/scripts/stage-cef-artifact.sh
 ```
 
-它会：
+The script:
 
-1. 检查 archive 是否安全；
-2. 检查 archive 顶层目录是否正确；
-3. 检查 `Release/`、`Resources/`、`include/`、`cmake/`、`libcef_dll/`；
-4. 检查 `Release/libcef.so`；
-5. 用 `nm` 确认 `cef_request_raw_snapshot` 确实存在；
-6. 计算 tarball 和 `libcef.so` 的 SHA-256；
-7. 验证全部通过后再放入：
+1. checks that the archive is safe;
+2. checks that the archive has the expected top-level directory;
+3. verifies `Release/`, `Resources/`, `include/`, `cmake/`, and `libcef_dll/`;
+4. verifies `Release/libcef.so`;
+5. uses `nm` to confirm that `cef_request_raw_snapshot` is exported;
+6. calculates SHA-256 for both the tarball and `libcef.so`;
+7. stages the validated distribution under:
 
 ```
 cef/third_party/cef/
 └── cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal/
 ```
 
-### 3. v0.01 当前的文件名兼容处理
+### 3. Current v0.01 filename compatibility
 
-当前 `cedar-c2v-cpp` 的 `stage-cef-artifact.sh` 仍然会检查 archive basename，要求旧的 CEF 文件名：
+The current `cedar-c2v-cpp` `stage-cef-artifact.sh` still validates the archive basename and expects the original CEF filename:
 
 ```
 cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2
 ```
 
-因此，在 consumer 还没有更新为原生识别 Cedar package name 前，可以建立一个 symlink，不需要复制约 321 MB 的文件：
+Until the consumer is updated to accept the Cedar package name directly, create a symlink instead of copying the roughly 321 MB file:
 
 ```bash
 ln -s \
@@ -173,13 +173,13 @@ export CEF_ARTIFACT="/tmp/cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_lin
 bash cef-custom-build/scripts/stage-cef-artifact.sh
 ```
 
-这里仅改变外部文件名；tarball 内部仍保持标准 CEF distribution directory，所以 CMake 集成不需要改变。
+Only the external filename changes. The directory inside the tarball still follows the standard CEF distribution layout, so the CMake integration does not need to change.
 
-后续 `cedar-c2v-cpp` 应直接接受 Cedar package name，这个兼容步骤即可删除。
+Once `cedar-c2v-cpp` accepts Cedar package names directly, this compatibility step can be removed.
 
-### 4. 构建 cedar-c2v-cpp
+### 4. Build cedar-c2v-cpp
 
-完成 stage 后，正常构建：
+After staging:
 
 ```bash
 docker build --shm-size=1g \
@@ -187,46 +187,46 @@ docker build --shm-size=1g \
   -f docker/Dockerfile.service .
 ```
 
-Docker build 会把：
+The Docker build copies:
 
 ```
 cef/third_party/cef/
 ```
 
-复制到 build image。
+into the build image.
 
-CEF CMake 逻辑发现对应 distribution 已经存在后，会直接将其作为 `CEF_ROOT` 使用，不再下载官方 CEF。
+When the CEF CMake logic sees that the required distribution is already present, it uses it as `CEF_ROOT` instead of downloading the official CEF package.
 
-默认 production build 是 fail-closed：
+The default production build is fail-closed:
 
-> 如果没有找到 staged Cedar CEF，或者 `libcef.so` 不包含 `cef_request_raw_snapshot`，build 会失败，而不是悄悄退回官方 CEF。
+> If the staged Cedar CEF distribution is missing, or if `libcef.so` does not export `cef_request_raw_snapshot`, the build fails instead of silently falling back to official CEF.
 
-只有显式使用：
+Only an explicit:
 
 ```bash
 --build-arg ALLOW_OFFICIAL_CEF=1
 ```
 
-才允许构建 official CEF / CDP control image。
+allows an official CEF / CDP control build.
 
-## 为什么发布完整 distribution
+## Why a full distribution is published
 
-理论上可以只发布一个修改后的 `libcef.so`。
+In theory, only the modified `libcef.so` could be published.
 
-v0.01 没有这么做，而是发布完整 CEF minimal distribution，主要原因是：
+v0.01 publishes the complete CEF minimal distribution instead because:
 
-- `cedar-c2v-cpp` 现有 CMake 集成可以直接消费；
-- headers、wrapper、CMake metadata 和 runtime resources 与 CEF 版本保持一致；
-- 不需要在 consumer 里维护一套特殊的“替换 libcef.so”逻辑；
-- 更容易做版本锁定和完整性检查。
+- the existing `cedar-c2v-cpp` CMake integration can consume it directly;
+- headers, wrapper sources, CMake metadata, and runtime resources stay aligned with the CEF version;
+- the consumer does not need a special "replace libcef.so" workflow;
+- version locking and integrity checks are simpler.
 
-也就是说，v0.01 的目标不是重新设计 CEF packaging，而是：
+In other words, v0.01 does not try to redesign CEF packaging. Its goal is:
 
-> 在尽量不改动 `cedar-c2v-cpp` 原有 CEF 集成方式的前提下，提供 Cedar 定制的可直接使用版本。
+> Provide a directly usable Cedar-customized CEF distribution while changing as little as possible in the existing `cedar-c2v-cpp` CEF integration.
 
 ## Artifact identity
 
-当前已验证 artifact：
+Verified artifact:
 
 | Item | Value |
 | --- | --- |
@@ -235,26 +235,26 @@ v0.01 没有这么做，而是发布完整 CEF minimal distribution，主要原�
 | `libcef.so` SHA-256 | `d8bb85ad84bf5eaee62b961f6d255aaf20a7db5db8ca02a14ca684c4df4aad53` |
 | custom export | `cef_request_raw_snapshot` |
 
-v0.01 只是将已经验证过的 CEF tarball 改成 Cedar 对外 package name，文件内容不变，因此 SHA-256 不变。
+v0.01 only renames the already verified CEF tarball to the Cedar-facing package name. The file contents do not change, so the SHA-256 remains unchanged.
 
-如果未来重新打包、修改内容或重新编译，即使版本号相同，也必须重新计算并记录 artifact identity。
+If the archive is repacked, modified, or rebuilt in the future, the artifact identity must be recalculated and recorded even if the release version stays the same.
 
 ## Consumer
 
-当前主要消费方：
+Current primary consumer:
 
 - `cedar-c2v-cpp`
 
-原则上，上层项目依赖的是：
+At the product level, consumers depend on:
 
 ```
 Cedar version + Chromium baseline
 ```
 
-即：
+For this release:
 
 ```
 v0.01 + Chromium 152.0.7977.83
 ```
 
-CEF 的完整内部版本、commit、build 参数等信息保留在本 release note 中，用于追溯和复现。
+The full internal CEF version, commit, and build details remain in this release note for traceability and reproducibility.
