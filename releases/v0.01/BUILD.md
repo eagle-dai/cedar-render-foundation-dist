@@ -202,11 +202,9 @@ Both checks must find:
 cef_request_raw_snapshot
 ```
 
-### 5. Record and verify artifact identity
+### 5. Record the published artifact identity
 
-After the build, record the produced artifact identity and compare it with the known v0.01 release artifact when validating an existing saved copy.
-
-The artifact used for v0.01 was verified as:
+For reference, the originally published v0.01 artifact was:
 
 | Item | Value |
 | --- | --- |
@@ -224,7 +222,7 @@ The generated CEF archive is:
 /data/cef-build/chromium/src/cef/binary_distrib/cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2
 ```
 
-Publish the same bytes under the Cedar-facing name:
+Publish the generated archive under the Cedar-facing name:
 
 ```bash
 cp \
@@ -236,13 +234,13 @@ sha256sum cedar-render-foundation-v0.01-chromium-152.0.7977.83-linux-x64.tar.bz2
 
 Do not extract and repack the archive. Only the external filename changes.
 
-For the originally published v0.01 asset, the SHA-256 is:
+For reference, the originally published v0.01 asset has SHA-256:
 
 ```
 7eda840f893f72764a1a14b0ad491c8d25d91507ff59c454c87ace1de9c5f2f1
 ```
 
-A fresh Chromium / CEF rebuild is not guaranteed to be bit-for-bit identical across hosts, so a newly rebuilt archive may legitimately have a different SHA-256. If that happens, it is a new binary artifact even when produced from the same pinned inputs.
+This checksum identifies the published asset only. It is not a rebuild acceptance criterion.
 
 If the SHA-256 differs from the published v0.01 asset, do **not** replace the existing v0.01 binary under the same release. Publish the rebuilt binary as a new foundation release and update the consuming `cedar-c2v-cpp` release URL / SHA-256 explicitly.
 
@@ -257,10 +255,9 @@ For the closest reproduction of this release:
 3. Use the pinned values in `cef-custom-build/CEF_VERSION.lock`.
 4. Run `cef-custom-build/scripts/build-cef-from-source.sh`, preferably with `INSTALL_TO_REPO=0` when producing only the release artifact.
 5. Verify `cef_request_raw_snapshot` exists in the built and packaged `libcef.so`.
-6. Record the new tarball and `libcef.so` SHA-256 values.
-7. Copy the generated tarball to the Cedar-facing filename without repacking it.
-8. Compare its identity and behavior with the published v0.01 artifact.
+6. Copy the generated tarball to the Cedar-facing filename without repacking it.
+7. Validate that the package can be consumed by `cedar-c2v-cpp` as expected.
 
-The source inputs are pinned, but the Chromium/CEF build is not guaranteed to be bit-for-bit reproducible across different hosts. A rebuilt archive may therefore have a different SHA-256 even when the same source revisions and build parameters are used.
+The goal of reproduction is to rebuild the same Cedar-customized CEF configuration and behavior from the pinned source/build inputs.
 
-The v0.01 SHA-256 identifies the exact binary published in this release; the pinned source revisions, patch, build arguments, and build script provide its provenance.
+The v0.01 checksum is kept only to identify the originally published binary asset.
