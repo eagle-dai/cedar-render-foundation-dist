@@ -111,16 +111,11 @@ publish as v0.01 asset
 
 ### 1. Prepare a build host
 
-The reference build host recorded in `cedar-c2v-cpp` was:
+Use a Linux x64 environment that can build Chromium / CEF.
 
-- Ubuntu
-- EC2 `c5.4xlarge`
-- 16 vCPU
-- 30 GiB RAM
-- dedicated storage of at least 250 GiB
-- swap enabled for the ThinLTO link step
+The build needs enough disk space and memory for a full Chromium / CEF source build, but this release does not require a specific cloud instance type, CPU count, RAM size, or storage layout.
 
-The source checkout and build cache live outside the Git repository.
+The source checkout and build cache should live outside the Git repository.
 
 Example:
 
