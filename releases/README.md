@@ -1,6 +1,6 @@
 # Releases
 
-每个 Cedar Render Foundation 发行版本单独一个目录。
+Each Cedar Render Foundation release has its own directory.
 
 ```
 releases/
@@ -9,7 +9,7 @@ releases/
     └── README.md
 ```
 
-每个版本目录至少记录：
+Each release directory should record at least:
 
 - Cedar release version
 - package filename
@@ -18,7 +18,7 @@ releases/
 - platform / architecture
 - custom capabilities
 - artifact SHA-256
-- 来源 / build 信息
+- source / build information
 - compatibility notes
 
 ## Versions
