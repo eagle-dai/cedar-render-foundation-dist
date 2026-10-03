@@ -19,7 +19,7 @@ The build procedure comes from `cedar-c2v-cpp`:
 For v0.01, use the stable `cedar-c2v-cpp` tag:
 
 ```
-v2.0.0
+v2.1.2
 ```
 
 That tag contains the custom CEF source-build flow, raw-snapshot patch, version lock, and build documentation used as the reproducible reference for this release.
@@ -32,7 +32,7 @@ That tag contains the custom CEF source-build flow, raw-snapshot patch, version 
 | CEF branch | `7977` |
 | Chromium | `152.0.7977.83` |
 | Chromium checkout | `refs/tags/152.0.7977.83` |
-| cedar-c2v-cpp reference tag | `v2.0.0` |
+| cedar-c2v-cpp reference tag | `v2.1.2` |
 | Exact source/tool revisions | see `cef-custom-build/CEF_VERSION.lock` in that tag |
 | Distribution | Linux x64, Release, CEF `minimal` |
 | Archive format | `tar.bz2` |
@@ -144,7 +144,7 @@ The script performs four important build phases:
 3. Install the Chromium build dependencies from the checked-out source tree.
 4. Build `libcef` and create the CEF `minimal` distribution.
 
-The exact checkout and tool revisions are intentionally not duplicated here. They are read from `cef-custom-build/CEF_VERSION.lock` in the `cedar-c2v-cpp` `v2.0.0` tag.
+The exact checkout and tool revisions are intentionally not duplicated here. They are read from `cef-custom-build/CEF_VERSION.lock` in the `cedar-c2v-cpp` `v2.1.2` tag.
 
 The final build/package phase uses the pinned CEF driver to build `libcef`, preserve the already-applied Cedar patch, and generate the Linux x64 Release `minimal` distribution.
 
@@ -209,7 +209,7 @@ Therefore the published asset keeps the same SHA-256:
 
 For the closest reproduction of this release:
 
-1. Check out the `cedar-c2v-cpp` tag `v2.0.0`.
+1. Check out the `cedar-c2v-cpp` tag `v2.1.2`.
 2. Use the pinned values in `cef-custom-build/CEF_VERSION.lock`.
 3. Run `cef-custom-build/scripts/build-cef-from-source.sh`.
 4. Verify `cef_request_raw_snapshot` exists.
