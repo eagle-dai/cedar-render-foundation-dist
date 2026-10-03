@@ -114,6 +114,15 @@ publish as v0.01 asset
 
 Use a Linux x64 environment that can build Chromium / CEF.
 
+Before running the repository build script, the host needs the basic bootstrap tools used before Chromium's own dependency installer can run:
+
+- `bash`
+- `git`
+- `curl`
+- `python3`
+- standard archive/checksum tools such as `tar` and `sha256sum`
+- permission to install the Linux packages requested by Chromium's `install-build-deps.sh`
+
 The build needs enough disk space and memory for a full Chromium / CEF source build, but this release does not require a specific cloud instance type, CPU count, RAM size, or storage layout.
 
 The source checkout and build cache should live outside the Git repository.
@@ -126,12 +135,17 @@ WORK_DIR=/data/cef-build
 
 ### 2. Run the source-build automation
 
-From the `cedar-c2v-cpp` repository:
+Use the `cedar-c2v-cpp` tag recorded for this release:
 
 ```bash
+git checkout v2.1.2
+
 WORK_DIR=/data/cef-build \
+  INSTALL_TO_REPO=0 \
   bash cef-custom-build/scripts/build-cef-from-source.sh
 ```
+
+`INSTALL_TO_REPO=0` is recommended when the goal is only to produce the release artifact. It leaves the generated CEF distribution under `WORK_DIR` instead of also extracting a copy into `cedar-c2v-cpp/cef/third_party/cef/`.
 
 The script performs four important build phases:
 
@@ -189,30 +203,44 @@ The artifact used for v0.01 was verified as:
 
 ### 6. Rename for the Cedar release
 
-The verified CEF archive was published under the Cedar-facing name:
+The generated CEF archive is:
 
 ```
-cedar-render-foundation-v0.01-chromium-152.0.7977.83-linux-x64.tar.bz2
+/data/cef-build/chromium/src/cef/binary_distrib/cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2
 ```
 
-Only the filename changed. The archive bytes were not repacked or modified.
+Publish the same bytes under the Cedar-facing name:
 
-Therefore the published asset keeps the same SHA-256:
+```bash
+cp \
+  /data/cef-build/chromium/src/cef/binary_distrib/cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2 \
+  cedar-render-foundation-v0.01-chromium-152.0.7977.83-linux-x64.tar.bz2
+
+sha256sum cedar-render-foundation-v0.01-chromium-152.0.7977.83-linux-x64.tar.bz2
+```
+
+Do not extract and repack the archive. Only the external filename changes.
+
+For the originally published v0.01 asset, the SHA-256 is:
 
 ```
 7eda840f893f72764a1a14b0ad491c8d25d91507ff59c454c87ace1de9c5f2f1
 ```
 
+A fresh Chromium / CEF rebuild is not guaranteed to be bit-for-bit identical across hosts, so a newly rebuilt archive may legitimately have a different SHA-256. If that happens, it is a new binary artifact even when produced from the same pinned inputs.
+
 ## Reproducing v0.01
 
 For the closest reproduction of this release:
 
-1. Check out the `cedar-c2v-cpp` tag `v2.1.2`.
-2. Use the pinned values in `cef-custom-build/CEF_VERSION.lock`.
-3. Run `cef-custom-build/scripts/build-cef-from-source.sh`.
-4. Verify `cef_request_raw_snapshot` exists.
-5. Record the new tarball and `libcef.so` SHA-256 values.
-6. Compare them with the v0.01 identity above.
+1. Obtain `cedar-c2v-cpp` and check out tag `v2.1.2`.
+2. Ensure the basic bootstrap tools above are available.
+3. Use the pinned values in `cef-custom-build/CEF_VERSION.lock`.
+4. Run `cef-custom-build/scripts/build-cef-from-source.sh`, preferably with `INSTALL_TO_REPO=0` when producing only the release artifact.
+5. Verify `cef_request_raw_snapshot` exists in the built and packaged `libcef.so`.
+6. Record the new tarball and `libcef.so` SHA-256 values.
+7. Copy the generated tarball to the Cedar-facing filename without repacking it.
+8. Compare its identity and behavior with the published v0.01 artifact.
 
 The source inputs are pinned, but the Chromium/CEF build is not guaranteed to be bit-for-bit reproducible across different hosts. A rebuilt archive may therefore have a different SHA-256 even when the same source revisions and build parameters are used.
 
