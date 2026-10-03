@@ -1,10 +1,24 @@
-# cedar-render-sdk
+# cedar-render-foundation-dist
 
-Cedar Render 的预编译 SDK / runtime 发布仓库。
+Cedar Render 基础渲染层的**预编译 distribution 发布仓库**。
 
-本仓库**不存放 Chromium / CEF 实现源码**，只发布已经编译好的包，供 `cedar-c2v-cpp` 等上层项目直接使用。
+本仓库**不存放 Chromium / CEF 实现源码**，只发布已经编译并验证过的 distribution，供 `cedar-c2v-cpp` 等上层项目直接使用。
 
 当前 Linux x64 的发布格式保持 CEF 标准 `minimal` distribution 结构，不再额外重新打包。这样现有 `cedar-c2v-cpp` 可以直接消费，无需修改它的 CMake/CEF 集成方式。
+
+简单理解：
+
+```
+render foundation implementation
+        │
+        │ build
+        ▼
+cedar-render-foundation-dist
+        │
+        │ prebuilt distribution
+        ▼
+cedar-c2v-cpp
+```
 
 ## 当前包
 
@@ -55,7 +69,7 @@ cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal/
 - CEF CMake 配置
 - Chromium runtime resources
 
-这里的“SDK”指**可供 C/C++ 项目集成的预编译 CEF distribution**，不是 cedar-render-shell 的源代码仓库。
+这里的 `dist` 指**可供上层 C/C++ 项目直接集成的预编译 renderer / CEF distribution**，不是渲染基础层的实现源码。
 
 ## cedar-c2v-cpp 如何使用
 
@@ -118,7 +132,7 @@ docker build --shm-size=1g \
 调用链如下：
 
 ```
-cedar-render-sdk release
+cedar-render-foundation-dist release
         │
         │ download tar.bz2
         ▼
@@ -154,7 +168,7 @@ cefservice
 
 如果 staged package 已经存在，它不会访问 `cef-builds.spotifycdn.com` 下载官方 CEF，而是直接把这个目录设为 `CEF_ROOT`。
 
-所以这个 SDK package 可以在**不修改 cedar-c2v-cpp 原有 CEF CMake 集成逻辑**的情况下替换官方 CEF。
+所以这个 distribution 可以在**不修改 cedar-c2v-cpp 原有 CEF CMake 集成逻辑**的情况下替换官方 CEF。
 
 ## Build 时的保护
 
@@ -220,13 +234,22 @@ cef_request_raw_snapshot
 
 ### cedar-render-shell
 
-研究和实现 Cedar 自己的 Chromium / CEF renderer 路线，包括 frame identity、compositor output 和更直接的 pixel delivery。
+当前负责研究和实现 Cedar 的 Chromium / CEF 底层渲染路线，包括 frame identity、compositor output 和更直接的 pixel delivery。
 
-### cedar-render-sdk
+它是**实现与研究仓库**，不是 distribution 仓库。
+
+### cedar-render-foundation-dist
 
 **本仓库。**
 
-只保存可以交付给上层项目使用的预编译 renderer/CEF SDK package。
+负责保存和发布由 Cedar 基础渲染层产出的、已经编译并验证过的 distribution。
+
+它的职责是：
+
+- 发布预编译 CEF / renderer artifact；
+- 固定版本与 artifact identity；
+- 记录 SHA-256 和 custom capabilities；
+- 让上层项目无需重新编译 Chromium / CEF 即可使用。
 
 ### cedar-c2v-cpp
 
@@ -240,16 +263,17 @@ cef_request_raw_snapshot
 - AV1 / WebM 等视频编码与输出；
 - 产品级 end-to-end 流程。
 
-简单理解：
+整体关系：
 
 ```
-renderer / CEF implementation
+cedar-render-shell
+  implementation / research
         │
         │ build
         ▼
-cedar-render-sdk
+cedar-render-foundation-dist
         │
-        │ prebuilt package
+        │ verified prebuilt distribution
         ▼
 cedar-c2v-cpp
         │
@@ -262,15 +286,15 @@ video
 每个 Release 至少记录：
 
 - package filename
-- Cedar SDK version
+- distribution version
 - CEF version / commit
 - Chromium version
 - target platform / architecture
-- 对应实现/patch 的来源 commit
+- 对应实现 / patch 的来源 commit
 - tarball SHA-256
 - `libcef.so` SHA-256
 - custom exports / capabilities
 
 目标是让 `cedar-c2v-cpp` 只需要：
 
-> 下载一个经过验证的 package，而不需要重新编译 Chromium。
+> 下载一个经过验证的 distribution，而不需要重新编译 Chromium。
