@@ -29,6 +29,12 @@ cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2
 | Platform | Linux x64 |
 | Distribution | CEF `minimal` |
 
+## How this release was built
+
+See [`BUILD.md`](BUILD.md) for the build provenance and reproduction flow.
+
+It documents the exact `cedar-c2v-cpp/cef-custom-build/` source-build pipeline used for v0.01: pinned CEF/Chromium revisions, Cedar raw-snapshot patch, build arguments, packaging, export verification, checksums, and the final release rename.
+
 ## What's included
 
 v0.01 keeps the standard CEF `minimal` distribution layout.
