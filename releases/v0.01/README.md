@@ -5,7 +5,7 @@
 ## Package
 
 ```
-cedar-render-foundation-v0.01-linux-x64.tar.bz2
+cedar-render-foundation-v0.01-chromium-152.0.7977.83-linux-x64.tar.bz2
 ```
 
 ## Base
@@ -47,7 +47,7 @@ cef_request_raw_snapshot
 | original tarball SHA-256 | `7eda840f893f72764a1a14b0ad491c8d25d91507ff59c454c87ace1de9c5f2f1` |
 | `libcef.so` SHA-256 | `d8bb85ad84bf5eaee62b961f6d255aaf20a7db5db8ca02a14ca684c4df4aad53` |
 
-> 注意：如果只是把原始 tarball 改名为 Cedar package，文件内容不变，SHA-256 也不会改变；如果重新打包，则必须重新记录新的 package SHA-256。
+> 如果只是把原始 tarball 改名为 Cedar package，文件内容不变，SHA-256 也不会改变；如果重新打包，则必须重新记录新的 package SHA-256。
 
 ## Consumer
 
@@ -55,4 +55,4 @@ cef_request_raw_snapshot
 
 - `cedar-c2v-cpp`
 
-上层项目应优先依赖 Cedar release version，而不是直接依赖 CEF / Chromium 的长版本号。
+上层项目依赖 Cedar release version，同时通过文件名即可识别对应的 Chromium 基线。
