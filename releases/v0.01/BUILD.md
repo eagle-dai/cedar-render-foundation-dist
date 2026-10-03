@@ -171,9 +171,9 @@ The archive keeps the normal CEF `minimal` distribution layout.
 
 ### 4. Verify the Cedar capability
 
-The build script refuses to accept a `libcef.so` that does not export the Cedar API.
+The build script refuses to accept a built `libcef.so` that does not export the Cedar API.
 
-Equivalent manual check:
+Equivalent manual check for the built library:
 
 ```bash
 nm -D --defined-only \
@@ -181,10 +181,25 @@ nm -D --defined-only \
   | grep cef_request_raw_snapshot
 ```
 
-The packaged copy must also contain the same export in:
+Also verify the copy that is actually inside the generated distribution:
+
+```bash
+CEF_ARCHIVE=/data/cef-build/chromium/src/cef/binary_distrib/cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2
+TMP_DIR="$(mktemp -d)"
+
+tar -xjf "$CEF_ARCHIVE" -C "$TMP_DIR"
+
+nm -D --defined-only \
+  "$TMP_DIR/cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal/Release/libcef.so" \
+  | grep cef_request_raw_snapshot
+
+rm -rf "$TMP_DIR"
+```
+
+Both checks must find:
 
 ```
-Release/libcef.so
+cef_request_raw_snapshot
 ```
 
 ### 5. Record and verify artifact identity
@@ -229,7 +244,11 @@ For the originally published v0.01 asset, the SHA-256 is:
 
 A fresh Chromium / CEF rebuild is not guaranteed to be bit-for-bit identical across hosts, so a newly rebuilt archive may legitimately have a different SHA-256. If that happens, it is a new binary artifact even when produced from the same pinned inputs.
 
-## Reproducing v0.01
+If the SHA-256 differs from the published v0.01 asset, do **not** replace the existing v0.01 binary under the same release. Publish the rebuilt binary as a new foundation release and update the consuming `cedar-c2v-cpp` release URL / SHA-256 explicitly.
+
+If exact byte identity with v0.01 is required, use the existing v0.01 release asset and verify its recorded SHA-256 instead of relying on a fresh Chromium / CEF rebuild.
+
+## Rebuilding from the same inputs
 
 For the closest reproduction of this release:
 
