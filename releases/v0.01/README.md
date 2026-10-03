@@ -32,7 +32,7 @@ cef_binary_152.0.6+g708dc14+chromium-152.0.7977.83_linux64_minimal.tar.bz2
 
 See [`BUILD.md`](BUILD.md) for the build provenance and reproduction flow.
 
-It documents the `cedar-c2v-cpp` `v2.0.0` custom CEF source-build pipeline used as the reference for v0.01: version lock, Cedar raw-snapshot patch, build arguments, packaging, export verification, checksums, and the final release rename.
+It documents the `cedar-c2v-cpp` `v2.1.2` custom CEF source-build pipeline used as the reference for v0.01: version lock, Cedar raw-snapshot patch, build arguments, packaging, export verification, checksums, and the final release rename.
 
 ## What's included
 
@@ -262,4 +262,4 @@ For this release:
 v0.01 + Chromium 152.0.7977.83
 ```
 
-The CEF version and build details remain in this release note for traceability and reproducibility. Exact source/tool revisions stay in the `cedar-c2v-cpp` `v2.0.0` version lock rather than being duplicated here.
+The CEF version and build details remain in this release note for traceability and reproducibility. Exact source/tool revisions stay in the `cedar-c2v-cpp` `v2.1.2` version lock rather than being duplicated here.
