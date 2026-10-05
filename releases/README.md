@@ -25,5 +25,6 @@ Each release directory should record at least:
 
 ## Versions
 
+- [v0.2.0](v0.2.0/README.md) — Cedar-built CEF with the internalized `cef_request_raw_snapshot` export
 - [v0.1.0](v0.1.0/README.md) — clean Cedar-built CEF baseline, no custom export
 - [v0.01](v0.01/README.md) — adds the `cef_request_raw_snapshot` export
