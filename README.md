@@ -8,6 +8,7 @@ This repository does not contain Chromium / CEF implementation source code. It s
 
 | Version | Chromium | Package | Platform | Details |
 | --- | --- | --- | --- | --- |
+| v0.1.0 | `152.0.7977.83` | `cedar-render-foundation-v0.1.0-chromium-152.0.7977.83-linux-x64.tar.bz2` | Linux x64 | [release notes](releases/v0.1.0/README.md) |
 | v0.01 | `152.0.7977.83` | `cedar-render-foundation-v0.01-chromium-152.0.7977.83-linux-x64.tar.bz2` | Linux x64 | [release notes](releases/v0.01/README.md) |
 
 More detailed information such as the CEF version, SHA-256 values, and custom capabilities is kept under `releases/`.
