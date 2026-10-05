@@ -1,0 +1,5 @@
+# Release binaries are published as GitHub Release assets, not committed to Git.
+# This repository tracks only release notes and metadata under releases/.
+*.tar.bz2
+*.tar.gz
+*.zip
